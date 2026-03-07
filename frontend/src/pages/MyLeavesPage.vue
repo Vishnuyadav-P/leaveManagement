@@ -105,12 +105,51 @@
                   <span class="w-1.5 h-1.5 rounded-full" :class="statusDot(leave.status)"></span>
                   {{ leave.status }}
                 </span>
+                <button
+                  v-if="leave.status === 'Rejected' && leave.rejectionReason"
+                  @click="openRejectionReason(leave)"
+                  class="ml-2 text-xs text-red-400 hover:text-red-300 underline"
+                >
+                  View reason
+                </button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
+
+    <!-- Rejection Reason Modal -->
+    <transition name="modal">
+      <div v-if="rejectionModal.show" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 rounded-2xl max-w-md w-full animate-slide-up">
+          <div class="border-b border-slate-800 p-6 flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-semibold text-white">Rejection Reason</h2>
+              <p class="text-xs text-slate-500 mt-1">{{ rejectionModal.leaveType }}</p>
+            </div>
+            <button @click="rejectionModal.show = false" class="text-slate-400 hover:text-slate-200">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="p-6">
+            <p class="text-slate-300 leading-relaxed text-sm">{{ rejectionModal.reason }}</p>
+          </div>
+
+          <div class="border-t border-slate-800 p-6 flex justify-end">
+            <button
+              @click="rejectionModal.show = false"
+              class="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -121,6 +160,7 @@ import { leaveService } from '@/services/api.js'
 const leaves = ref([])
 const loading = ref(true)
 const error = ref('')
+const rejectionModal = ref({ show: false, reason: '', leaveType: '' })
 
 const fetchLeaves = async () => {
   loading.value = true
@@ -132,6 +172,14 @@ const fetchLeaves = async () => {
     error.value = err.response?.data?.message || 'Failed to load leave requests'
   } finally {
     loading.value = false
+  }
+}
+
+const openRejectionReason = (leave) => {
+  rejectionModal.value = {
+    show: true,
+    reason: leave.rejectionReason || 'No reason provided',
+    leaveType: leave.leaveType,
   }
 }
 
@@ -171,3 +219,14 @@ const statusDot = (status) => {
   return map[status] || 'bg-amber-400'
 }
 </script>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease;
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+</style>

@@ -337,15 +337,3 @@ vite           — Build tool + dev server
 tailwindcss    — Utility CSS framework
 @vitejs/plugin-vue — Vite Vue plugin
 ```
-
----
-
-## 🏗️ Future Enhancements
-
-- Email notifications on leave status change
-- Leave balance tracking (days remaining per type)
-- Calendar view of team leaves
-- Comment/notes when rejecting
-- Admin super-user role
-- Export leaves to CSV/PDF
-- Pagination on large datasets

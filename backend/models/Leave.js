@@ -31,6 +31,11 @@ const leaveSchema = new mongoose.Schema(
       enum: ['Pending', 'Approved', 'Rejected'],
       default: 'Pending',
     },
+    rejectionReason: {
+      type: String,
+      trim: true,
+      minlength: [5, 'Rejection reason must be at least 5 characters'],
+    },
   },
   { timestamps: true }
 );

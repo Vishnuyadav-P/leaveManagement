@@ -80,10 +80,15 @@ const getAllLeaves = async (req, res) => {
 // @access  Private (Employer only)
 const updateLeaveStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, rejectionReason } = req.body;
 
     if (!status || !['Approved', 'Rejected'].includes(status)) {
       return res.status(400).json({ message: 'Status must be Approved or Rejected' });
+    }
+
+    // Validate rejection reason is provided when rejecting
+    if (status === 'Rejected' && (!rejectionReason || rejectionReason.trim().length < 5)) {
+      return res.status(400).json({ message: 'Rejection reason must be at least 5 characters' });
     }
 
     const leave = await Leave.findById(req.params.id);
@@ -97,6 +102,9 @@ const updateLeaveStatus = async (req, res) => {
     }
 
     leave.status = status;
+    if (status === 'Rejected') {
+      leave.rejectionReason = rejectionReason;
+    }
     await leave.save();
 
     const updatedLeave = await Leave.findById(leave._id).populate('employeeId', 'name email');
