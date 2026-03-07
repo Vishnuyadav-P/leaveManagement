@@ -176,13 +176,13 @@ Visit `http://localhost:3000` in your browser.
 
 ```
 Employee:
-- Email: emp@huskyvoice.ai
-- Password: 123456
+- Email: vishnu@huskyvoice.ai
+- Password: Vishnu
 - Role: Employee
 
 Employer:
-- Email: emp@huskyvoice.ai  
-- Password: 123456
+- Email: manager@huskyvoice.ai  
+- Password: Manager
 - Role: Employer
 ```
 
