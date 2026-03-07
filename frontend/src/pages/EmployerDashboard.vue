@@ -1,0 +1,310 @@
+<template>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+    <!-- Header -->
+    <div class="mb-8 animate-fade-in">
+      <h1 class="page-title">Leave Management</h1>
+      <p class="page-subtitle">Review and manage all employee leave requests</p>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-slide-up">
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs text-slate-500 uppercase tracking-wider">Total</p>
+          <div class="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center">
+            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-3xl font-semibold text-white">{{ leaves.length }}</p>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs text-slate-500 uppercase tracking-wider">Pending</p>
+          <div class="w-8 h-8 bg-amber-400/10 rounded-lg flex items-center justify-center">
+            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-3xl font-semibold text-amber-400">{{ countByStatus('Pending') }}</p>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs text-slate-500 uppercase tracking-wider">Approved</p>
+          <div class="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-3xl font-semibold text-emerald-400">{{ countByStatus('Approved') }}</p>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs text-slate-500 uppercase tracking-wider">Rejected</p>
+          <div class="w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center">
+            <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-3xl font-semibold text-red-400">{{ countByStatus('Rejected') }}</p>
+      </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="flex items-center gap-2 mb-5">
+      <button
+        v-for="tab in filterTabs"
+        :key="tab.value"
+        @click="activeFilter = tab.value"
+        :class="[
+          'px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
+          activeFilter === tab.value
+            ? 'bg-amber-400/10 text-amber-400 border border-amber-400/20'
+            : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/60'
+        ]"
+      >
+        {{ tab.label }}
+        <span
+          :class="['ml-1.5 text-xs', activeFilter === tab.value ? 'text-amber-400' : 'text-slate-600']"
+        >{{ tab.value === 'All' ? leaves.length : countByStatus(tab.value) }}</span>
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div v-if="loading" class="flex items-center justify-center py-20">
+      <div class="text-center">
+        <svg class="w-8 h-8 animate-spin text-amber-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        <p class="text-slate-500 text-sm">Loading leave requests...</p>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div v-else-if="fetchError" class="card p-8 text-center">
+      <p class="text-red-400">{{ fetchError }}</p>
+      <button @click="fetchLeaves" class="btn-secondary mt-4">Try Again</button>
+    </div>
+
+    <!-- Empty -->
+    <div v-else-if="filteredLeaves.length === 0" class="card p-12 text-center animate-fade-in">
+      <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+      </div>
+      <h3 class="font-display text-xl text-white mb-2">No requests found</h3>
+      <p class="text-slate-400 text-sm">
+        {{ activeFilter === 'All' ? 'No leave requests have been submitted yet.' : `No ${activeFilter.toLowerCase()} requests.` }}
+      </p>
+    </div>
+
+    <!-- Table -->
+    <div v-else class="card overflow-hidden animate-slide-up">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="border-b border-slate-800">
+              <th class="px-5 py-3.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Employee</th>
+              <th class="px-5 py-3.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
+              <th class="px-5 py-3.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Dates</th>
+              <th class="px-5 py-3.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Days</th>
+              <th class="px-5 py-3.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Reason</th>
+              <th class="px-5 py-3.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+              <th class="px-5 py-3.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/50">
+            <tr
+              v-for="leave in filteredLeaves"
+              :key="leave._id"
+              class="hover:bg-slate-800/20 transition-colors duration-150"
+            >
+              <td class="px-5 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 bg-gradient-to-br from-amber-400/20 to-amber-600/20 rounded-full flex items-center justify-center border border-amber-400/20">
+                    <span class="text-amber-400 text-sm font-semibold">
+                      {{ leave.employeeId?.name?.charAt(0)?.toUpperCase() }}
+                    </span>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-slate-200">{{ leave.employeeId?.name }}</p>
+                    <p class="text-xs text-slate-500">{{ leave.employeeId?.email }}</p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-5 py-4">
+                <span class="inline-flex items-center gap-1.5 text-sm text-slate-300">
+                  {{ typeEmoji(leave.leaveType) }} {{ leave.leaveType }}
+                </span>
+              </td>
+              <td class="px-5 py-4">
+                <div class="text-sm font-mono">
+                  <p class="text-slate-300">{{ formatDate(leave.startDate) }}</p>
+                  <p class="text-slate-500 text-xs">to {{ formatDate(leave.endDate) }}</p>
+                </div>
+              </td>
+              <td class="px-5 py-4 text-sm text-slate-400">{{ calcDays(leave.startDate, leave.endDate) }}d</td>
+              <td class="px-5 py-4">
+                <p class="text-sm text-slate-400 max-w-[180px] truncate" :title="leave.reason">{{ leave.reason }}</p>
+              </td>
+              <td class="px-5 py-4">
+                <span :class="statusBadge(leave.status)">
+                  <span class="w-1.5 h-1.5 rounded-full" :class="statusDot(leave.status)"></span>
+                  {{ leave.status }}
+                </span>
+              </td>
+              <td class="px-5 py-4">
+                <div v-if="leave.status === 'Pending'" class="flex items-center gap-2">
+                  <button
+                    @click="updateStatus(leave._id, 'Approved')"
+                    :disabled="processingId === leave._id"
+                    class="btn-success"
+                  >
+                    <svg v-if="processingId === leave._id" class="w-3 h-3 animate-spin inline" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <span v-else>✓ Approve</span>
+                  </button>
+                  <button
+                    @click="updateStatus(leave._id, 'Rejected')"
+                    :disabled="processingId === leave._id"
+                    class="btn-danger"
+                  >
+                    ✕ Reject
+                  </button>
+                </div>
+                <span v-else class="text-xs text-slate-600 italic">Processed</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <transition name="toast">
+      <div
+        v-if="toast.show"
+        :class="[
+          'fixed bottom-6 right-6 px-5 py-3.5 rounded-xl shadow-2xl border flex items-center gap-3 z-50',
+          toast.type === 'success'
+            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+            : 'bg-red-500/10 border-red-500/30 text-red-300'
+        ]"
+      >
+        <svg v-if="toast.type === 'success'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <span class="text-sm font-medium">{{ toast.message }}</span>
+      </div>
+    </transition>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { leaveService } from '@/services/api.js'
+
+const leaves = ref([])
+const loading = ref(true)
+const fetchError = ref('')
+const processingId = ref(null)
+const activeFilter = ref('All')
+
+const filterTabs = [
+  { label: 'All Requests', value: 'All' },
+  { label: 'Pending', value: 'Pending' },
+  { label: 'Approved', value: 'Approved' },
+  { label: 'Rejected', value: 'Rejected' },
+]
+
+const toast = ref({ show: false, message: '', type: 'success' })
+
+const showToast = (message, type = 'success') => {
+  toast.value = { show: true, message, type }
+  setTimeout(() => (toast.value.show = false), 3000)
+}
+
+const filteredLeaves = computed(() => {
+  if (activeFilter.value === 'All') return leaves.value
+  return leaves.value.filter((l) => l.status === activeFilter.value)
+})
+
+const fetchLeaves = async () => {
+  loading.value = true
+  fetchError.value = ''
+  try {
+    const res = await leaveService.getAllLeaves()
+    leaves.value = res.data.leaves
+  } catch (err) {
+    fetchError.value = err.response?.data?.message || 'Failed to load leave requests'
+  } finally {
+    loading.value = false
+  }
+}
+
+const updateStatus = async (id, status) => {
+  processingId.value = id
+  try {
+    const res = await leaveService.updateLeaveStatus(id, status)
+    const idx = leaves.value.findIndex((l) => l._id === id)
+    if (idx !== -1) {
+      leaves.value[idx] = res.data.leave
+    }
+    showToast(`Leave ${status.toLowerCase()} successfully`, 'success')
+  } catch (err) {
+    showToast(err.response?.data?.message || 'Failed to update status', 'error')
+  } finally {
+    processingId.value = null
+  }
+}
+
+onMounted(fetchLeaves)
+
+const countByStatus = (status) => leaves.value.filter((l) => l.status === status).length
+
+const formatDate = (dateStr) =>
+  new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+
+const calcDays = (start, end) => {
+  const diff = Math.ceil((new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24)) + 1
+  return diff > 0 ? diff : 1
+}
+
+const typeEmoji = (type) => {
+  const map = { 'Sick Leave': '🤒', 'Casual Leave': '☀️', 'Vacation': '🏖️' }
+  return map[type] || '📅'
+}
+
+const statusBadge = (status) => {
+  const map = { Pending: 'badge-pending', Approved: 'badge-approved', Rejected: 'badge-rejected' }
+  return map[status] || 'badge-pending'
+}
+
+const statusDot = (status) => {
+  const map = { Pending: 'bg-amber-400', Approved: 'bg-emerald-400', Rejected: 'bg-red-400' }
+  return map[status] || 'bg-amber-400'
+}
+</script>
+
+<style scoped>
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translateY(12px);
+}
+</style>
