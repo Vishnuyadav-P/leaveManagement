@@ -1,6 +1,8 @@
-# 🗓️ LeaveFlow — Leave Management System
+# Leave Management System - Vercel Serverless Edition
 
-A full-stack MVP Leave Management Web Application built with Vue 3, Node.js/Express, and MongoDB Atlas. Employees can apply for leave and employers can approve or reject requests in real time.
+A sophisticated leave management application built with Vue.js 3 and deployed on **Vercel serverless functions**. Employees can submit, track, and manage leave requests while employers can review, approve, or reject them with custom rejection reasons.
+
+> **🔄 Architecture Migrated:** This project was refactored from a traditional Express.js backend on Render to **Vercel serverless functions** for zero-config deployment, auto-scaling, and reduced operational overhead.
 
 ---
 
@@ -30,132 +32,204 @@ A full-stack MVP Leave Management Web Application built with Vue 3, Node.js/Expr
 
 ## 🛠️ Tech Stack
 
-| Layer      | Technology                                 |
-|------------|--------------------------------------------|
-| Frontend   | Vue 3 (Composition API), Vite              |
-| Styling    | Tailwind CSS, DM Sans + DM Serif fonts     |
-| HTTP       | Axios (with request/response interceptors) |
-| Routing    | Vue Router 4                               |
-| Backend    | Node.js, Express.js                        |
-| Auth       | JWT (jsonwebtoken), bcryptjs               |
-| Database   | MongoDB Atlas via Mongoose ODM             |
-| Env Config | dotenv                                     |
+| Layer         | Technology                      |
+|---------------|---------------------------------|
+| **Frontend**  | Vue 3, Vite, TailwindCSS        |
+| **Backend**   | Node.js Serverless (Vercel)     |
+| **Database**  | MongoDB Atlas                   |
+| **Auth**      | JWT + bcryptjs                  |
+| **Hosting**   | Vercel (Frontend & Serverless)  |
+| **API Client** | Axios                          |
 
 ---
 
-## 📁 Folder Structure
+## 📁 New Serverless Architecture  
+
+This project has been refactored to use **Vercel serverless functions** instead of a traditional Express server. Each file in `/api` automatically becomes a serverless endpoint.
 
 ```
 leave-app/
-├── backend/
-│   ├── config/
-│   │   └── db.js                 # MongoDB connection
-│   ├── controllers/
-│   │   ├── authController.js     # Register, Login, GetMe
-│   │   └── leaveController.js    # Apply, View, Approve/Reject
-│   ├── middleware/
-│   │   └── authMiddleware.js     # JWT verify, role guards
-│   ├── models/
-│   │   ├── User.js               # User schema (name, email, password, role)
-│   │   └── Leave.js              # Leave schema (type, dates, reason, status)
-│   ├── routes/
-│   │   ├── authRoutes.js         # /api/auth/*
-│   │   └── leaveRoutes.js        # /api/leaves/*
-│   ├── server.js                 # Express app entry point
-│   └── .env                      # Environment variables
+├── api/                          # ⭐ Vercel serverless functions
+│   ├── auth/
+│   │   ├── register.js           # POST /api/auth/register
+│   │   ├── login.js              # POST /api/auth/login
+│   │   └── me.js                 # GET /api/auth/me
+│   ├── leaves/
+│   │   ├── apply.js              # POST /api/leaves/apply
+│   │   ├── my.js                 # GET /api/leaves/my
+│   │   ├── index.js              # GET /api/leaves
+│   │   └── [id].js               # PATCH /api/leaves/[id]
+│   └── health.js                 # GET /api/health
 │
-└── frontend/
-    ├── src/
-    │   ├── assets/
-    │   │   └── main.css          # Global Tailwind + custom styles
-    │   ├── pages/
-    │   │   ├── LoginPage.vue
-    │   │   ├── RegisterPage.vue
-    │   │   ├── ApplyLeavePage.vue
-    │   │   ├── MyLeavesPage.vue
-    │   │   ├── EmployerDashboard.vue
-    │   │   └── NotFound.vue
-    │   ├── router/
-    │   │   └── index.js          # Vue Router with guards
-    │   ├── services/
-    │   │   ├── api.js            # Axios instance + service calls
-    │   │   └── auth.js           # Auth composable (state + methods)
-    │   ├── App.vue               # Root component with navbar
-    │   └── main.js               # App entry point
-    ├── tailwind.config.js
-    ├── vite.config.js
-    └── package.json
+├── lib/
+│   └── db.js                     # MongoDB connection (optimized)
+│
+├── models/
+│   ├── User.js                   # Mongoose User schema
+│   └── Leave.js                  # Mongoose Leave schema
+│
+├── middleware/
+│   └── auth.js                   # JWT verification & authorization
+│
+├── frontend/                      # Vue.js SPA
+│   ├── src/pages/                # Page components
+│   ├── src/services/api.js       # Updated to use /api
+│   ├── tailwind.config.js
+│   ├── vite.config.js
+│   └── package.json
+│
+├── vercel.json                   # Vercel deployment config
+└── README.md                     # This file
 ```
+
+### What Changed: Express → Serverless
+
+| Previous | New |
+|----------|-----|
+| `server.js` + Express | `/api` folder + Vercel routing |
+| `routes/` + `controllers/` | Single-file handlers in `/api` |
+| Server process running 24/7 | Serverless functions on-demand |
+| Render hosting | Vercel hosting (zero-config) |
+| CORS middleware | CORS headers in each function |
+| Global error handler | Per-function error handling |
 
 ---
 
-## ⚙️ Environment Variables
+## 🔐 Environment Variables
 
-Create a `.env` file inside the `backend/` directory:
+### Local Development
+
+Create `.env` at **project root**:
 
 ```env
-PORT=5000
-MONGO_URI=your_mongodb_atlas_connection_string_here
-JWT_SECRET=your_super_secret_jwt_key_here_change_in_production
-CLIENT_URL=http://localhost:5173
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/leave-db
+JWT_SECRET=your_secret_key_32_chars_minimum
+VITE_API_BASE_URL=/api
 ```
 
-### Getting a MongoDB Atlas URI
-1. Go to [https://cloud.mongodb.com](https://cloud.mongodb.com)
-2. Create a free cluster
-3. Click **Connect** → **Connect your application**
-4. Copy the connection string and replace `<password>` with your DB password
-5. Example: `mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/leaveflow?retryWrites=true&w=majority`
+### Production (Vercel)
+
+Set these in Vercel Project Settings → Environment Variables:
+- `MONGODB_URI` - MongoDB Atlas connection string
+- `JWT_SECRET` - Your secret key
+
+### How to Generate JWT_SECRET
+
+```bash
+# Using Node.js
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+### MongoDB Atlas Setup
+
+1. Go to [cloud.mongodb.com](https://cloud.mongodb.com)
+2. Create a **free cluster**
+3. Go to **Connect** → **Drivers**
+4. Copy connection string: `mongodb+srv://username:password@cluster.mongodb.net/dbname`
+5. Paste into `MONGODB_URI`
+6. **Important:** In **Network Access**, add `0.0.0.0/0` to allow Vercel IPs
 
 ---
 
-## 🚀 Installation & Setup
+## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js v18+
-- npm v9+
-- MongoDB Atlas account (free tier works)
+- **Node.js** v16+
+- **npm** or **yarn**
+- **MongoDB Atlas** account (free tier)
+- **Vercel** account (for deployment)
 
-### 1. Clone / Download the project
+### 1. Clone & Install
 
 ```bash
+git clone <your-repo-url>
 cd leave-app
+
+# Install all dependencies
+npm install
+cd frontend && npm install && cd ..
 ```
 
-### 2. Setup Backend
+### 2. Setup Environment
 
 ```bash
-cd backend
-
-# Install dependencies
-npm install
-
-# Configure environment
-# Edit .env with your MONGO_URI and JWT_SECRET
-
-# Start development server
-npm run dev
-# OR for production:
-npm start
+# Create .env at project root
+echo "MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/leave-db" > .env
+echo "JWT_SECRET=your_secret_key_here" >> .env
 ```
 
-The backend will start on `http://localhost:5000`
+### 3. Run Locally (Development)
 
-### 3. Setup Frontend
+Open **two terminals**:
+
+**Terminal 1: Backend**
+```bash
+cd backend && npm run dev
+# Runs on http://localhost:5000
+```
+
+**Terminal 2: Frontend**
+```bash
+cd frontend && npm run dev
+# Runs on http://localhost:5173
+```
+
+Visit `http://localhost:5173` in your browser.
+
+### 4. Test Credentials
+
+```
+Employee:
+- Email: emp@huskyvoice.ai
+- Password: 123456
+- Role: Employee
+
+Employer:
+- Email: emp@huskyvoice.ai  
+- Password: 123456
+- Role: Employer
+```
+
+---
+
+## 🌐 Deploy to Vercel
+
+### Prerequisites
+- GitHub account with your repo
+- Vercel account
+
+### Deployment Steps
 
 ```bash
-cd frontend
+# 1. Push to GitHub
+git add .
+git commit -m "Serverless refactor ready for Vercel"
+git push origin main
 
-# Install dependencies
-npm install
+# 2. Go to vercel.com
+#    → New Project
+#    → Import your GitHub repo
 
-# Start development server
-npm run dev
+# 3. In Project Settings → Environment Variables:
+#    Add: MONGODB_URI = your_connection_string
+#    Add: JWT_SECRET = your_secret_key
+
+# 4. Click Deploy!
+
+# Your app is now live at: https://your-project.vercel.app
 ```
 
-The frontend will start on `http://localhost:5173`
+### Verify Deployment
 
-> **Note:** The Vite dev server proxies `/api` calls to `http://localhost:5000` automatically — no CORS issues during development.
+```bash
+# Health check
+curl https://your-project.vercel.app/api/health
+
+# Try registering
+curl -X POST https://your-project.vercel.app/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test","email":"test@huskyvoice.ai","password":"123456"}'
+```
 
 ---
 

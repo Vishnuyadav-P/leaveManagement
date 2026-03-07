@@ -1,7 +1,8 @@
 import axios from 'axios'
 
+// Use relative /api path for serverless functions on Vercel
 const api = axios.create({
-  baseURL: 'https://leavemanagement-ogne.onrender.com/api',
+  baseURL: '/api',
   headers: { 'Content-Type': 'application/json' },
 })
 
@@ -39,9 +40,7 @@ export const authService = {
 
 // Leave services
 export const leaveService = {
-  applyLeave: (data) => api.post('/leaves', data),
-  getMyLeaves: () => api.get('/leaves/my'),
-  getAllLeaves: () => api.get('/leaves'),
+  applyLeave: (data) => api.post('/leaves/apply', data),
   updateLeaveStatus: (id, status, rejectionReason) => api.patch(`/leaves/${id}`, { status, rejectionReason }),
 }
 
