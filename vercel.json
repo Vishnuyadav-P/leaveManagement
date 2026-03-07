@@ -3,6 +3,10 @@
   "installCommand": "npm install",
   "outputDirectory": "frontend/dist",
   "framework": "vite",
+  "env": {
+    "MONGODB_URI": "mongodb+srv://vishnu:S1rAGgNw3QpASrh2@leavemgmt.0qy3dwq.mongodb.net/?appName=leavemgmt",
+    "JWT_SECRET": "@jwt_secret"
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
