@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'https://leavemanagement-ogne.onrender.com',
+  baseURL: 'https://leavemanagement-ogne.onrender.com/api',
   headers: { 'Content-Type': 'application/json' },
 })
 
