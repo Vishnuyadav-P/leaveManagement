@@ -71,13 +71,13 @@ leave-app/
 ├── middleware/
 │   └── auth.js                   # JWT verification & authorization
 │
-├── frontend/                      # Vue.js SPA
-│   ├── src/pages/                # Page components
-│   ├── src/services/api.js       # Updated to use /api
-│   ├── tailwind.config.js
-│   ├── vite.config.js
-│   └── package.json
+├── src/                          # Vue 3 Frontend Source
+│   ├── pages/                    # Page components
+│   └── services/api.js           # API Client
 │
+├── tailwind.config.js            # Tailwind CSS config
+├── vite.config.js                # Vite config
+├── package.json                  # Single merged package.json for Backend & Frontend deps
 ├── vercel.json                   # Vercel deployment config
 └── README.md                     # This file
 ```
@@ -145,9 +145,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 git clone <your-repo-url>
 cd leave-app
 
-# Install all dependencies
+# Install all dependencies (frontend & backend)
 npm install
-cd frontend && npm install && cd ..
 ```
 
 ### 2. Setup Environment
@@ -160,21 +159,18 @@ echo "JWT_SECRET=your_secret_key_here" >> .env
 
 ### 3. Run Locally (Development)
 
-Open **two terminals**:
+To run the Vue frontend and Vercel serverless functions locally together, use the Vercel CLI:
 
-**Terminal 1: Backend**
 ```bash
-cd backend && npm run dev
-# Runs on http://localhost:5000
+# Install Vercel CLI globally if you haven't
+npm i -g vercel
+
+# Run the local dev server
+npx vercel dev
+# Runs on http://localhost:3000
 ```
 
-**Terminal 2: Frontend**
-```bash
-cd frontend && npm run dev
-# Runs on http://localhost:5173
-```
-
-Visit `http://localhost:5173` in your browser.
+Visit `http://localhost:3000` in your browser.
 
 ### 4. Test Credentials
 
@@ -391,15 +387,11 @@ Unauthorized access redirects to the appropriate page.
 
 ## 📦 Dependencies
 
-### Backend
+### Backend (Serverless APIs)
 ```
-express        — Web framework
 mongoose       — MongoDB ODM
 jsonwebtoken   — JWT auth
 bcryptjs       — Password hashing
-cors           — Cross-origin requests
-dotenv         — Environment variables
-nodemon        — Dev auto-reload (devDependency)
 ```
 
 ### Frontend
