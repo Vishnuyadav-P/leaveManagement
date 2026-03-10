@@ -28,14 +28,19 @@ export default async function handler(req, res) {
     }
 
     const { id } = req.query;
-    const { status, rejectionReason } = req.body;
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const { status: rawStatus, rejectionReason } = body || {};
 
-    if (!status || !['Approved', 'Rejected'].includes(status)) {
+    // Normalize status for lenient client payloads (e.g., 'approve', 'APPROVED')
+    const status = typeof rawStatus === 'string' ? rawStatus.trim().toLowerCase() : '';
+    const normalizedStatus = status === 'approved' || status === 'approve' ? 'Approved' : status === 'rejected' || status === 'reject' ? 'Rejected' : null;
+
+    if (!normalizedStatus) {
       return res.status(400).json({ message: 'Status must be Approved or Rejected' });
     }
 
     // Validate rejection reason is provided when rejecting
-    if (status === 'Rejected' && (!rejectionReason || rejectionReason.trim().length < 5)) {
+    if (normalizedStatus === 'Rejected' && (!rejectionReason || rejectionReason.trim().length < 5)) {
       return res.status(400).json({ message: 'Rejection reason must be at least 5 characters' });
     }
 
@@ -49,8 +54,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ message: 'This leave has already been processed' });
     }
 
-    leave.status = status;
-    if (status === 'Rejected') {
+    leave.status = normalizedStatus;
+    if (normalizedStatus === 'Rejected') {
       leave.rejectionReason = rejectionReason;
     }
     await leave.save();
@@ -58,7 +63,7 @@ export default async function handler(req, res) {
     const updatedLeave = await Leave.findById(leave._id).populate('employeeId', 'name email');
 
     res.status(200).json({
-      message: `Leave ${status.toLowerCase()} successfully`,
+      message: `Leave ${normalizedStatus.toLowerCase()} successfully`,
       leave: updatedLeave,
     });
   } catch (error) {
