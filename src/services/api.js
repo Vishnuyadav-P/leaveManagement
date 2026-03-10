@@ -43,7 +43,7 @@ export const leaveService = {
   applyLeave: (data) => api.post('/leaves/apply', data),
   getMyLeaves: () => api.get('/leaves/my'),
   getAllLeaves: () => api.get('/leaves'),
-  updateLeaveStatus: (id, status, rejectionReason) => api.patch(`/leaves/${id}`, { status, rejectionReason }),
+  updateLeaveStatus: (id, status, rejectionReason) => api.patch(`/leaves`, { status, rejectionReason }, { params: { id } }),
 }
 
 export default api
