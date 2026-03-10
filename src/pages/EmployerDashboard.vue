@@ -470,6 +470,7 @@ const submitRejectReason = async () => {
     closeRejectDialog()
     previewModal.value.show = false
   } catch (err) {
+    console.error('Reject leave error:', err)
     showToast(err.response?.data?.message || 'Failed to reject leave', 'error')
   } finally {
     processingId.value = null
@@ -505,6 +506,7 @@ const updateStatus = async (id, status) => {
     showToast(`Leave ${status.toLowerCase()} successfully`, 'success')
     previewModal.value.show = false
   } catch (err) {
+    console.error('Update status error:', err)
     showToast(err.response?.data?.message || 'Failed to update status', 'error')
   } finally {
     processingId.value = null

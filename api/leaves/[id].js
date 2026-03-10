@@ -1,6 +1,6 @@
-import { connectDB } from '../../../lib/db.js';
-import { Leave } from '../../../models/Leave.js';
-import { requireEmployer } from '../../../middleware/auth.js';
+import { connectDB } from '../../lib/db.js';
+import { Leave } from '../../models/Leave.js';
+import { requireEmployer } from '../../middleware/auth.js';
 
 export default async function handler(req, res) {
   // Enable CORS
@@ -28,12 +28,28 @@ export default async function handler(req, res) {
     }
 
     const { id } = req.query;
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+
+    // Parse body reliably (Vercel serverless sometimes gives a raw string body)
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch (parseErr) {
+        console.error('Failed to parse request body:', parseErr, 'rawBody:', req.body);
+        return res.status(400).json({ message: 'Invalid request payload' });
+      }
+    }
+
     const { status: rawStatus, rejectionReason } = body || {};
 
     // Normalize status for lenient client payloads (e.g., 'approve', 'APPROVED')
     const status = typeof rawStatus === 'string' ? rawStatus.trim().toLowerCase() : '';
-    const normalizedStatus = status === 'approved' || status === 'approve' ? 'Approved' : status === 'rejected' || status === 'reject' ? 'Rejected' : null;
+    const normalizedStatus =
+      status === 'approved' || status === 'approve'
+        ? 'Approved'
+        : status === 'rejected' || status === 'reject'
+        ? 'Rejected'
+        : null;
 
     if (!normalizedStatus) {
       return res.status(400).json({ message: 'Status must be Approved or Rejected' });
@@ -50,7 +66,7 @@ export default async function handler(req, res) {
       return res.status(404).json({ message: 'Leave request not found' });
     }
 
-    if (leave.status !== 'Pending') {
+    if (!leave.status || leave.status.toLowerCase() !== 'pending') {
       return res.status(400).json({ message: 'This leave has already been processed' });
     }
 

@@ -116,7 +116,8 @@ const handleLogin = async () => {
     const dest = isEmployer.value ? '/dashboard' : '/my-leaves'
     router.push(dest)
   } catch (err) {
-    error.value = err.response?.data?.message || 'Login failed. Please try again.'
+    console.error('Login error:', err)
+    error.value = err.response?.data?.message || `Login failed (status: ${err.response?.status || 'unknown'}). Please try again.`
   } finally {
     loading.value = false
   }
